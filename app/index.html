@@ -1,11 +1,43 @@
 <!DOCTYPE HTML>
 <html ng-app="donethat">
+
 <body>
-<div ng-controller="HomeCtrl">
-  <button ng-click="add()">add</button>
-</div>
-<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
-<script src="js/pouchdb-2.2.0.min.js"></script>
-<script src="js/app.js"></script>
+  <div ng-controller="HomeCtrl">
+    <form name="taskForm" ng-submit="add()">
+      <div>
+        <input required type="time" step="900" ng-model="task.startTime" />-
+        <input required type="time" step="900" ng-model="task.endTime" />
+      </div>
+
+      <div>
+        <input required ng-model="task.project" name="projects" list="projects" />
+        <datalist id="projects">
+          <option ng-repeat="p in projects" value="{{p}}">{{p}}</option>
+        </datalist>
+
+        <input required ng-model="task.task" name="tasks" list="tasks" />
+        <datalist id="tasks">
+          <option ng-repeat="t in tasks" value="{{t}}">{{t}}</option>
+        </datalist>
+        <button type="submit">add</button>
+    </form>
+    <table>
+      <tbody>
+        <tr ng-repeat="t in todaysTasks">
+          <td>{{t.started | date:'HH:mm'}} - {{t.ended | date:'HH:mm'}}</td>
+          <td>{{t.project}} - {{t.task}}</td>
+          <td>
+            <button type="button" ng-click="remove(t)">Ta bort</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    </div>
+  </div>
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+  <script src="js/pouchdb-2.2.0.min.js"></script>
+  <script src="js/app.js"></script>
 </body>
+
 </html>
