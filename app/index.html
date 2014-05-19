@@ -1,39 +1,62 @@
 <!DOCTYPE HTML>
 <html ng-app="donethat">
-
+<head>
+  <title>donethat</title>
+  <link rel="stylesheet" type="text/css" href="app.css">
+</head>
 <body>
-  <div ng-controller="HomeCtrl">
+  <header>
+  </header>
+  <div ng-controller="HomeCtrl" class="content">
+    <div class="datepicker">
+      <h1 ng-hide="changingDate" ng-click="changeDate()">{{today | date:'EEEE d MMMM, yyyy'}}</h1>
+      <input type="date" id="datepicker-input" ng-model="todayString" ng-change="setDate(todayString)" />
+    </div>
     <form name="taskForm" ng-submit="add()">
-      <div>
-        <input required type="time" step="900" ng-model="task.startTime" />-
+      <div class="heading">New task</div>
+      <div class="group">
+        <input required type="time" step="900" ng-model="task.startTime" />
         <input required type="time" step="900" ng-model="task.endTime" />
       </div>
 
-      <div>
-        <input required ng-model="task.project" name="projects" list="projects" />
+      <div class="group">
+        <input required ng-model="task.project" name="projects" list="projects" placeholder="Project" />
         <datalist id="projects">
           <option ng-repeat="p in projects" value="{{p}}">{{p}}</option>
         </datalist>
 
-        <input required ng-model="task.task" name="tasks" list="tasks" />
+        <input required ng-model="task.task" name="tasks" list="tasks" placeholder="Task" />
         <datalist id="tasks">
           <option ng-repeat="t in tasks" value="{{t}}">{{t}}</option>
         </datalist>
-        <button type="submit">add</button>
+      </div>
+      <button class="add-btn" ng-show="taskForm.$valid" type="submit">Add task</button>
     </form>
-    <table>
+    <table ng-show="todaysTasks.length > 0">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Task</th>
+          <th class="text-right">Spent(h)</th>
+          <th class="th-action"></th>
+        </tr>
+      </thead>
       <tbody>
         <tr ng-repeat="t in todaysTasks">
           <td>{{t.started | date:'HH:mm'}} - {{t.ended | date:'HH:mm'}}</td>
           <td>{{t.project}} - {{t.task}}</td>
+          <td class="text-right">{{t.timeInHours}}</td>
           <td>
-            <button type="button" ng-click="remove(t)">Ta bort</button>
+            <button class="delete-btn" ng-click="remove(t)">x</button>
           </td>
+        </tr>
+        <tr class="summary">
+          <td colspan="2">Total time</td>
+          <td class="text-right">{{totalTimeSpent()}}</td>
+          <td></td>
         </tr>
       </tbody>
     </table>
-
-    </div>
   </div>
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
   <script src="js/pouchdb-2.2.0.min.js"></script>

@@ -59,15 +59,28 @@ app.run(function($rootScope) {
   });
 });
 
-app.controller('HomeCtrl', function($scope, $rootScope) {
+app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
   $rootScope.$on('appReady', loadData);
+  $scope.todaysTasks = [];
+
+  //watch functions
+  window.onbeforeunload = function() {
+    if($scope.task) return 'You have unsaved changes!';
+  }
+
+  $rootScope.$on('$locationChangeSuccess', function(){
+    $scope.today = $location.search().date || new Date();
+    console.log('changingDate');
+    loadData();
+  });
+
 
   //action functions
   $scope.add = function() {
     if($scope.taskForm.$invalid) return;
 
-    var started = new Date();
-    var ended = new Date();
+    var started = new Date($scope.today);
+    var ended = new Date($scope.today);
     started.setHours($scope.task.startTime.split(':')[0]);
     started.setMinutes($scope.task.startTime.split(':')[1]);
     started.setSeconds(0);
@@ -79,16 +92,50 @@ app.controller('HomeCtrl', function($scope, $rootScope) {
     $scope.task.type = 'task';
     $scope.task.started = started.toJSON();
     $scope.task.ended = ended.toJSON();
+    $scope.task.timeInHours = calculateTime($scope.task.ended, $scope.task.started);
 
     db.put($scope.task).then(function(){
       loadData();
       $scope.task = null;
       $scope.$apply();
     });
+
+
+    function calculateTime(totime, fromtime) {
+      fromtime = new Date(fromtime);
+      totime = new Date(totime);
+
+      var ms = totime.getTime() - fromtime.getTime();
+      return ms / 1000 / 60 / 60;
+    }
   };
 
   $scope.remove = function(doc){
     db.remove(doc).then(loadData);
+  }
+
+  $scope.totalTimeSpent = function(){
+    var totalTime = 0;
+
+    $scope.todaysTasks.forEach(function(task){
+     totalTime += task.timeInHours;
+    });
+
+    return totalTime;
+  }
+
+  $scope.changeDate = function(){
+    $scope.changingDate = true;
+    $scope.todayString = $filter('date')($scope.today, 'yyyy-MM-dd');
+    setTimeout(function(){
+      var element = document.getElementById('datepicker-input');
+      element.focus();  
+    }, 1);
+  }
+
+  $scope.setDate = function(date){
+    $location.search('date', date);
+
   }
 
   //helper functions
@@ -96,7 +143,6 @@ app.controller('HomeCtrl', function($scope, $rootScope) {
     console.log('loading data...');
     db.query('allProjects', { reduce: true, group: true})
     .then(function(res) {
-      console.log(res);
       $scope.projects = res.rows.map(function(row) { return row.key; });
       $scope.$apply();
     })
@@ -106,7 +152,6 @@ app.controller('HomeCtrl', function($scope, $rootScope) {
 
     db.query('allTasks', { reduce: true, group: true})
     .then(function(res) {
-      console.log(res);
       $scope.tasks = res.rows.map(function(row) { return row.key; });
       $scope.$apply();
     })
@@ -114,8 +159,8 @@ app.controller('HomeCtrl', function($scope, $rootScope) {
       console.log(err);
     });
 
-    var todayStart = new Date();
-    var todayEnd = new Date();
+    var todayStart = new Date($scope.today);
+    var todayEnd = new Date($scope.today);
     todayStart.setHours(0);
     todayStart.setMinutes(0);
     todayEnd.setHours(23);
@@ -123,9 +168,18 @@ app.controller('HomeCtrl', function($scope, $rootScope) {
 
     db.allDocs({startkey: todayStart.toJSON(), endkey: todayEnd.toJSON(), include_docs: true})
     .then(function(res){
-      console.log(res);
       $scope.todaysTasks = res.rows.map(function(row){ return row.doc });
       $scope.$apply();
     });
   }
 });
+
+app.filter('minusTimeGetHours', function(){
+  return function(totime, fromtime){
+    fromtime = new Date(fromtime);
+    totime = new Date(totime);
+
+    var ms = totime.getTime() - fromtime.getTime();
+    return ms / 1000 / 60 / 60;
+  }
+})

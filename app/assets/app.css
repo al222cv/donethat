@@ -1,0 +1,192 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* ---------------------------------- */
+*{
+  box-sizing: border-box;
+}
+
+body{
+  background: #E8E8E8;
+  font-family: sans-serif;
+  font-size: 15px;
+}
+
+header{
+  height: 40px;
+  width: 100%;
+  background: #121314;
+  position: fixed;
+  top:0;
+  left: 0;
+  /*border-bottom: 1px solid #84BD00; */
+}
+
+.content{
+  margin: 80px auto 40px auto;
+  max-width: 600px;
+}
+
+.content > *{
+  margin-bottom: 30px;
+}
+
+.group{
+  display: flex;
+  background: #FFFFFF;
+  box-shadow: 0 6px 4px -4px rgba(0,0,0,.2);
+  /*border: 1px solid #E8E8E8;*/
+}
+
+.group input{
+  padding: 10px 15px;
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #E8E8E8;
+  margin: 0;
+  color: #737476;
+  font-size: 13px;
+}
+
+.group input.ng-valid{
+  color:#555;
+}
+
+.group input:first-child{
+  border-right: 1px solid #E8E8E8;
+}
+
+.add-btn{
+  float: right;
+  border: none;
+  padding: 5px 10px;
+  margin: 0;
+  background: rgba(0,0,0,.2);
+  color: #fff;
+  font-weight: bold;
+} 
+
+table{
+  width: 100%;
+  background: #fff;
+  color: rgba(0,0,0,0.4);
+  box-shadow: 0 6px 4px -4px rgba(0,0,0,.2);
+}
+
+thead, .heading{
+  background: rgba(0,0,0,.2);
+  color: #fff;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+td, th{
+  padding: 10px 15px;
+  text-align: left;
+}
+
+.text-right{
+  text-align: right;
+}
+
+.heading{
+  padding: 10px 15px;
+}
+
+.th-action{
+  width: 5px;
+}
+
+.summary{
+  font-style: italic;
+  font-size: 12px;
+  border-top: 1px dashed #E8E8E8;
+  color: #555;
+}
+
+.delete-btn{
+  background: transparent;
+  padding: 3px;
+  margin: 0;
+  border: none;
+  color: rgba(0,0,0,0.1);
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: -5px;
+  font-size: 16px;
+}
+
+.delete-btn:hover{
+  color: red !important;
+}
+
+tbody tr:hover, tbody tr:hover .delete-btn{
+  color: #555;
+}
+
+h1{
+  text-align: center;
+  color: #555;
+  padding: 5px 0 4px 0;
+  display: inline-block;
+}
+
+.datepicker{
+  text-align: center;
+}
+
+.datepicker input{
+  border: 1px solid #E8E8E8;
+  color: #555;
+  text-align: center;
+  padding: 0;
+}
