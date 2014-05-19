@@ -5,18 +5,12 @@
   <link rel="stylesheet" type="text/css" href="app.css">
 </head>
 <body>
-  <header>
-  	<nav>
-  		<ul>
-  			<li><a href="">Task</a></li>
-  			<li><a href="">Reports</a></li>
-  		</ul>
-  	</nav>
-  </header>
-  <div ng-controller="HomeCtrl" class="content">
+  <div ng-controller="HomeCtrl" class="content more-space">
+    <h1>Tasks</h1>
     <div class="datepicker">
-      <button ng-click="changeDate(-1)"><</button><h1 ng-hide="changingDate">{{today | date:'EEEE d MMMM, yyyy'}}</h1><button ng-click="changeDate(1)">></button>
-      <!-- <input type="date" id="datepicker-input" ng-model="todayString" ng-change="setDate(todayString)" /> -->
+      <button ng-click="changeDate(-1)"><</button>
+      <h2 ng-hide="changingDate">{{today | date:'EEEE d MMMM, yyyy'}}</h2>
+      <button ng-click="changeDate(1)" ng-hide="nextUnavailable()">></button>
     </div>
     <form name="taskForm" ng-submit="add()">
       <div class="heading">New task</div>
@@ -38,7 +32,7 @@
       </div>
       <button class="add-btn" ng-show="taskForm.$valid" type="submit">Add task</button>
     </form>
-    <table ng-show="todaysTasks.length > 0">
+    <table>
       <thead>
         <tr>
           <th>Time</th>
@@ -64,8 +58,26 @@
       </tbody>
     </table>
   </div>
+  <hr />
   <div class="content" ng-controller="ReportCtrl">
-  	
+  	 <h1>Report</h1>
+     <div class="datepicker">
+        <input type="date" ng-model="startDate" ng-change="startDateChanged()" /> - <input type="date" ng-model="endDate" ng-change="endDateChanged()" />
+      </div>
+     <table>
+      <thead>
+        <tr>
+          <th>Project & task</th>
+          <th>Hours</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="s in stats">
+          <td>{{s.name}}</td>
+          <td>{{s.timeInHours}}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.5/angular.min.js"></script>
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.5/angular-route.min.js"></script>

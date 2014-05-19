@@ -1,5 +1,10 @@
 // PouchDB.destroy('donethat');
 var db = new PouchDB('donethat');
+db.replicate.to('https://larchii.cloudant.com/donethat', {continuous: true});
+db.replicate.from('https://larchii.cloudant.com/donethat', {continuous: true});
+// Pouch.replicate('ng-pouch', 'http://127.0.0.1:5984/ng-db', {continuous: true});
+// Pouch.replicate('http://127.0.0.1:5984/ng-db', 'ng-pouch', {continuous: true});
+
 var app = angular.module('donethat', []);
 
 app.run(function($rootScope) {
@@ -29,6 +34,19 @@ app.run(function($rootScope) {
     }
   };
 
+  var allProjectTasks = {
+    _id: '_design/allProjectTasks',
+    views: {
+      'allProjectTasks': {
+        map: function(doc) {
+          if (doc.type == 'task')
+            emit([doc.project, doc.task]);
+        }.toString(),
+        reduce: '_count'
+      }
+    }
+  }
+
   var sumByProjectAndTask = {
     _id: '_design/sumByProjectAndTask',
     views: {
@@ -36,7 +54,7 @@ app.run(function($rootScope) {
         map: function(doc){
           if(doc.type == 'task'){
             var d = new Date(doc._id);
-            emit([d.getFullYear(), d.getMonth() + 1, d.getDate(), doc.project, doc.task], doc.timeInHours);
+            emit([doc.project, doc.task, d.getFullYear(), d.getMonth() + 1, d.getDate()], doc.timeInHours);
           }
         }.toString(),
         reduce: '_sum'
@@ -65,6 +83,18 @@ app.run(function($rootScope) {
   })
   .then(function() {
     return db.query('allTasks', { stale: 'update_after' });
+  })
+  .then(function() {
+    return db.get('_design/allProjectTasks');
+  })
+  .then(function success(doc) {
+    allProjectTasks._rev = doc._rev;
+    return db.put(allProjectTasks);
+  }, function error(){
+    return db.put(allProjectTasks);
+  })
+  .then(function() {
+    return db.query('allProjectTasks', { stale: 'update_after' });
   })
   .then(function() {
     return db.get('_design/sumByProjectAndTask');
@@ -104,7 +134,6 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
   $rootScope.$on('$locationChangeSuccess', function(){
     $scope.today = $location.search().date ? new Date($location.search().date) : new Date();
     if($scope.isReady){
-      console.log('loading data from location....');
       loadData();
     }
   });
@@ -115,11 +144,12 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
 
     var started = new Date($scope.today);
     var ended = new Date($scope.today);
-    started.setHours($scope.task.startTime.split(':')[0]);
-    started.setMinutes($scope.task.startTime.split(':')[1]);
+
+    started.setHours($scope.task.startTime.getHours());
+    started.setMinutes($scope.task.startTime.getMinutes());
     started.setSeconds(0);
-    ended.setHours($scope.task.endTime.split(':')[0]);
-    ended.setMinutes($scope.task.endTime.split(':')[1]);
+    ended.setHours($scope.task.endTime.getHours());
+    ended.setMinutes($scope.task.endTime.getMinutes());
     ended.setSeconds(0);
 
     $scope.task._id = started.toJSON();
@@ -128,12 +158,14 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
     $scope.task.ended = ended.toJSON();
     $scope.task.timeInHours = calculateTime($scope.task.ended, $scope.task.started);
 
+    delete $scope.task.startTime;
+    delete $scope.task.endTime;
+
     db.put($scope.task).then(function(){
       loadData();
       $scope.task = null;
       $scope.$apply();
     });
-
 
     function calculateTime(totime, fromtime) {
       fromtime = new Date(fromtime);
@@ -146,7 +178,7 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
 
   $scope.remove = function(doc){
     db.remove(doc).then(loadData);
-  }
+  };
 
   $scope.totalTimeSpent = function(){
     var totalTime = 0;
@@ -156,7 +188,18 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
     });
 
     return totalTime;
-  }
+  };
+
+  $scope.nextUnavailable = function(){
+    if(!$scope.today) return false;
+    var today = new Date();
+    today.setHours(0);
+    today.setMinutes(0);
+    today.setSeconds(0);
+    today.setDate(today.getDate() - 1);
+
+    return $scope.today.getTime() >= today.getTime();
+  };
 
   $scope.changeDate = function(days){
     var newDate = angular.copy($scope.today);
@@ -167,7 +210,7 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
     var date = newDate.getDate();
 
     $location.search('date',  year + '-' + month + '-' + date);
-  }
+  };
 
   //helper functions
   function loadData(){
@@ -204,11 +247,60 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
   }
 });
 
-app.controller('ReportCtrl', function(){
-  db.query('sumByProjectAndTask',  { reduce: true, group_level: 5, startkey: [2014, 5, 17]})
-  .then(function(res){
-    console.log(res);
-  });
+app.controller('ReportCtrl', function($scope){
+  var date = new Date();
+  $scope.startDate = new Date(date.getFullYear(), date.getMonth() - 1, date.getDate());
+  $scope.endDate = date;  
+  
+  //watch functions
+  $scope.$on('appReady', loadData);
+
+  $scope.$watch('startDate', loadData);
+  $scope.$watch('endDate', loadData);
+
+  //action functions
+  $scope.startDateChanged = function(){
+    if($scope.startDate.getTime() > $scope.endDate.getTime())
+      $scope.endDate = $scope.startDate;
+  }
+
+  $scope.endDateChanged = function(){
+    if($scope.endDate.getTime() < $scope.startDate.getTime())
+      $scope.startDate = $scope.endDate;
+  }
+
+  //helper functions
+  function loadData(){
+    $scope.stats = [];
+
+    db.query('allProjectTasks', {reduce: true, group_level: 2})
+    .then(function(res){
+      var projectTasks = res.rows.map(function(row) { return row.key; });
+      projectTasks.forEach(function(pt){
+        db.query('sumByProjectAndTask',  { reduce: true, group_level: 5, startkey: [
+            pt[0], 
+            pt[1], 
+            $scope.startDate.getFullYear(), 
+            $scope.startDate.getMonth() + 1, 
+            $scope.startDate.getDate()
+          ], 
+          endkey:[
+            pt[0], 
+            pt[1], 
+            $scope.endDate.getFullYear(), 
+            $scope.endDate.getMonth() + 1, 
+            $scope.endDate.getDate()
+          ]})
+        .then(function(res){
+          $scope.stats.push({
+             name: res.rows[0].key[0] + ' - ' + res.rows[0].key[1],
+             timeInHours: res.rows[0].value
+          });
+          $scope.$apply();
+        });
+      });
+    });
+  }
 });
 
 app.filter('minusTimeGetHours', function(){
