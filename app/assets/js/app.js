@@ -36,7 +36,7 @@ app.run(function($rootScope) {
         map: function(doc){
           if(doc.type == 'task'){
             var d = new Date(doc._id);
-            emit([d.getFullYear(), d.getMonth() + 1, d.getDate(), doc.project, doc.task], doc.timeInHours)
+            emit([d.getFullYear(), d.getMonth() + 1, d.getDate(), doc.project, doc.task], doc.timeInHours);
           }
         }.toString(),
         reduce: '_sum'
@@ -88,7 +88,12 @@ app.run(function($rootScope) {
 });
 
 app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
-  $rootScope.$on('appReady', loadData);
+  $scope.isReady = false;
+  $rootScope.$on('appReady', function(){
+    $scope.isReady = true;
+    console.log('loading data...');
+    loadData();
+  });
   $scope.todaysTasks = [];
 
   //watch functions
@@ -97,11 +102,12 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
   }
 
   $rootScope.$on('$locationChangeSuccess', function(){
-    $scope.today = $location.search().date || new Date();
-    console.log('changingDate');
-    loadData();
+    $scope.today = $location.search().date ? new Date($location.search().date) : new Date();
+    if($scope.isReady){
+      console.log('loading data from location....');
+      loadData();
+    }
   });
-
 
   //action functions
   $scope.add = function() {
@@ -152,23 +158,19 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
     return totalTime;
   }
 
-  $scope.changeDate = function(){
-    $scope.changingDate = true;
-    $scope.todayString = $filter('date')($scope.today, 'yyyy-MM-dd');
-    setTimeout(function(){
-      var element = document.getElementById('datepicker-input');
-      element.focus();  
-    }, 1);
-  }
+  $scope.changeDate = function(days){
+    var newDate = angular.copy($scope.today);
+    newDate.setDate(newDate.getDate() + days);
 
-  $scope.setDate = function(date){
-    $location.search('date', date);
+    var year = newDate.getFullYear();
+    var month = newDate.getMonth() + 1;
+    var date = newDate.getDate();
 
+    $location.search('date',  year + '-' + month + '-' + date);
   }
 
   //helper functions
   function loadData(){
-    console.log('loading data...');
     db.query('allProjects', { reduce: true, group: true})
     .then(function(res) {
       $scope.projects = res.rows.map(function(row) { return row.key; });
@@ -199,12 +201,14 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
       $scope.todaysTasks = res.rows.map(function(row){ return row.doc });
       $scope.$apply();
     });
-
-    db.query('sumByProjectAndTask',  { reduce: true, group_level: 5})
-    .then(function(res){
-      console.log(res);
-    });
   }
+});
+
+app.controller('ReportCtrl', function(){
+  db.query('sumByProjectAndTask',  { reduce: true, group_level: 5, startkey: [2014, 5, 17]})
+  .then(function(res){
+    console.log(res);
+  });
 });
 
 app.filter('minusTimeGetHours', function(){

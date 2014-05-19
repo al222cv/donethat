@@ -6,11 +6,17 @@
 </head>
 <body>
   <header>
+  	<nav>
+  		<ul>
+  			<li><a href="">Task</a></li>
+  			<li><a href="">Reports</a></li>
+  		</ul>
+  	</nav>
   </header>
   <div ng-controller="HomeCtrl" class="content">
     <div class="datepicker">
-      <h1 ng-hide="changingDate" ng-click="changeDate()">{{today | date:'EEEE d MMMM, yyyy'}}</h1>
-      <input type="date" id="datepicker-input" ng-model="todayString" ng-change="setDate(todayString)" />
+      <button ng-click="changeDate(-1)"><</button><h1 ng-hide="changingDate">{{today | date:'EEEE d MMMM, yyyy'}}</h1><button ng-click="changeDate(1)">></button>
+      <!-- <input type="date" id="datepicker-input" ng-model="todayString" ng-change="setDate(todayString)" /> -->
     </div>
     <form name="taskForm" ng-submit="add()">
       <div class="heading">New task</div>
@@ -37,7 +43,7 @@
         <tr>
           <th>Time</th>
           <th>Task</th>
-          <th class="text-right">Spent(h)</th>
+          <th class="text-right">Hours</th>
           <th class="th-action"></th>
         </tr>
       </thead>
@@ -58,7 +64,11 @@
       </tbody>
     </table>
   </div>
-  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+  <div class="content" ng-controller="ReportCtrl">
+  	
+  </div>
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.5/angular.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.5/angular-route.min.js"></script>
   <script src="js/pouchdb-2.2.0.min.js"></script>
   <script src="js/app.js"></script>
 </body>
