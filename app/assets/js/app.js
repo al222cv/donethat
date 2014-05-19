@@ -1,3 +1,4 @@
+// PouchDB.destroy('donethat');
 var db = new PouchDB('donethat');
 var app = angular.module('donethat', []);
 
@@ -28,6 +29,21 @@ app.run(function($rootScope) {
     }
   };
 
+  var sumByProjectAndTask = {
+    _id: '_design/sumByProjectAndTask',
+    views: {
+      'sumByProjectAndTask':{
+        map: function(doc){
+          if(doc.type == 'task'){
+            var d = new Date(doc._id);
+            emit([d.getFullYear(), d.getMonth() + 1, d.getDate(), doc.project, doc.task], doc.timeInHours)
+          }
+        }.toString(),
+        reduce: '_sum'
+      }
+    }
+  }
+
   db.get('_design/allProjects')
   .then(function success(doc) {
     allProjectsView._rev = doc._rev;
@@ -49,6 +65,18 @@ app.run(function($rootScope) {
   })
   .then(function() {
     return db.query('allTasks', { stale: 'update_after' });
+  })
+  .then(function() {
+    return db.get('_design/sumByProjectAndTask');
+  })
+  .then(function success(doc) {
+    sumByProjectAndTask._rev = doc._rev;
+    return db.put(sumByProjectAndTask);
+  }, function error(){
+    return db.put(sumByProjectAndTask);
+  })
+  .then(function() {
+    return db.query('sumByProjectAndTask', { stale: 'update_after' });
   })
   .then(function(){
     console.log('ready');
@@ -170,6 +198,11 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
     .then(function(res){
       $scope.todaysTasks = res.rows.map(function(row){ return row.doc });
       $scope.$apply();
+    });
+
+    db.query('sumByProjectAndTask',  { reduce: true, group_level: 5})
+    .then(function(res){
+      console.log(res);
     });
   }
 });
