@@ -1,5 +1,5 @@
 var http = require('http');
-var port = 1337
+var port = process.env.PORT || 5000;
 var routes = require('./routes');
 
 process.on('uncaughtException', function(err) {
