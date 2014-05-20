@@ -1,9 +1,11 @@
 // PouchDB.destroy('donethat');
 var db = new PouchDB('donethat');
-db.replicate.to('https://larchii.cloudant.com/donethat', {continuous: true});
-db.replicate.from('https://larchii.cloudant.com/donethat', {continuous: true});
-
 var app = angular.module('donethat', []);
+
+if(document.URL.indexOf('herokuapp') != -1){
+  db.replicate.to('https://larchii.cloudant.com/donethat', {continuous: true});
+  db.replicate.from('https://larchii.cloudant.com/donethat', {continuous: true});
+}
 
 app.run(function($rootScope) {
   var allProjectsView = {
@@ -52,6 +54,7 @@ app.run(function($rootScope) {
         map: function(doc){
           if(doc.type == 'task'){
             var d = new Date(doc._id);
+            emit([doc.project, d.getFullYear(), d.getMonth() + 1, d.getDate()], doc.timeInHours);
             emit([doc.project, doc.task, d.getFullYear(), d.getMonth() + 1, d.getDate()], doc.timeInHours);
           }
         }.toString(),
@@ -214,47 +217,78 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
 
   //helper functions
   function loadData(){
-    db.query('allProjects', { reduce: true, group: true})
-    .then(function(res) {
-      $scope.projects = res.rows.map(function(row) { return row.key; });
-      $scope.$apply();
-    })
-    .catch(function(err){
-      console.log(err);
-    });
+    populateProjectList();
+    populateTaskList();
+    getAllTodaysTasks();
+    $scope.todaysSummary = [];
 
-    db.query('allTasks', { reduce: true, group: true})
-    .then(function(res) {
-      $scope.tasks = res.rows.map(function(row) { return row.key; });
-      $scope.$apply();
-    })
-    .catch(function(err){
-      console.log(err);
-    });
+    function populateProjectList(){
+      db.query('allProjects', { reduce: true, group: true})
+      .then(function(res) {
+        $scope.projects = res.rows.map(function(row) { return row.key; });
+        $scope.projects.forEach(getSummaryByProject);
+        $scope.$apply();
+      })
+      .catch(function(err){
+        console.log(err);
+      });  
+    }
 
-    var todayStart = new Date($scope.today);
-    var todayEnd = new Date($scope.today);
-    todayStart.setHours(0);
-    todayStart.setMinutes(0);
-    todayEnd.setHours(23);
-    todayEnd.setMinutes(59);
+    function populateTaskList(){
+       db.query('allTasks', { reduce: true, group: true})
+      .then(function(res) {
+        $scope.tasks = res.rows.map(function(row) { return row.key; });
+        $scope.$apply();
+      })
+      .catch(function(err){
+        console.log(err);
+      });   
+    }
+    
+    function getAllTodaysTasks (){
+      var todayStart = new Date($scope.today);
+      var todayEnd = new Date($scope.today);
+      todayStart.setHours(0);
+      todayStart.setMinutes(0);
+      todayEnd.setHours(23);
+      todayEnd.setMinutes(59);
 
-    db.allDocs({startkey: todayStart.toJSON(), endkey: todayEnd.toJSON(), include_docs: true})
-    .then(function(res){
-      $scope.todaysTasks = res.rows.map(function(row){ return row.doc });
-      $scope.$apply();
-    });
+      db.allDocs({startkey: todayStart.toJSON(), endkey: todayEnd.toJSON(), include_docs: true})
+      .then(function(res){
+        $scope.todaysTasks = res.rows.map(function(row){ return row.doc });
+        $scope.$apply();
+      });  
+    }
+
+    function getSummaryByProject(project){
+      db.query('sumByProjectAndTask',  { reduce: true, descending: true, group_level: 1, key: [
+          project, 
+          $scope.today.getFullYear(), 
+          $scope.today.getMonth() + 1, 
+          $scope.today.getDate()
+      ]})
+      .then(function(res){
+        $scope.todaysSummary.push({
+          project: res.rows[0].key[0],
+          timeInHours: res.rows[0].value
+        });
+        $scope.$apply();
+      });
+    }
   }
 });
 
 app.controller('ReportCtrl', function($scope){
   var date = new Date();
-  $scope.startDate = new Date(date.getFullYear(), date.getMonth() - 1, date.getDate());
-  $scope.endDate = date;  
+  var savedStartDate = localStorage.getItem('reportStartDate');
+  var savedEndDate = localStorage.getItem('reportEndDate');
+  savedStartDate = savedStartDate ? new Date(savedStartDate) : date;
+  savedEndDate = savedEndDate ? new Date(savedEndDate) : date;
+  $scope.startDate = savedStartDate;
+  $scope.endDate = savedEndDate;
   
   //watch functions
   $scope.$on('appReady', loadData);
-
   $scope.$watch('startDate', loadData);
   $scope.$watch('endDate', loadData);
 
@@ -262,11 +296,15 @@ app.controller('ReportCtrl', function($scope){
   $scope.startDateChanged = function(){
     if($scope.startDate.getTime() > $scope.endDate.getTime())
       $scope.endDate = $scope.startDate;
+
+    localStorage.setItem('reportStartDate', $scope.startDate.toJSON());
   }
 
   $scope.endDateChanged = function(){
     if($scope.endDate.getTime() < $scope.startDate.getTime())
       $scope.startDate = $scope.endDate;
+
+    localStorage.setItem('reportEndDate', $scope.endDate.toJSON());
   }
 
   //helper functions
@@ -277,7 +315,7 @@ app.controller('ReportCtrl', function($scope){
     .then(function(res){
       var projectTasks = res.rows.map(function(row) { return row.key; });
       projectTasks.forEach(function(pt){
-        db.query('sumByProjectAndTask',  { reduce: true, group_level: 5, startkey: [
+        db.query('sumByProjectAndTask',  { reduce: true, group_level: 2, startkey: [
             pt[0], 
             pt[1], 
             $scope.startDate.getFullYear(), 
@@ -302,13 +340,3 @@ app.controller('ReportCtrl', function($scope){
     });
   }
 });
-
-app.filter('minusTimeGetHours', function(){
-  return function(totime, fromtime){
-    fromtime = new Date(fromtime);
-    totime = new Date(totime);
-
-    var ms = totime.getTime() - fromtime.getTime();
-    return ms / 1000 / 60 / 60;
-  }
-})

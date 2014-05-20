@@ -10,7 +10,7 @@
     <div class="datepicker">
       <button ng-click="changeDate(-1)"><</button>
       <h2 ng-hide="changingDate">{{today | date:'EEEE d MMMM, yyyy'}}</h2>
-      <button ng-click="changeDate(1)" ng-hide="nextUnavailable()">></button>
+      <button ng-click="changeDate(1)" ng-disabled="nextUnavailable()">></button>
     </div>
     <form name="taskForm" ng-submit="add()">
       <div class="heading">New task</div>
@@ -32,7 +32,7 @@
       </div>
       <button class="add-btn" ng-show="taskForm.$valid" type="submit">Add task</button>
     </form>
-    <table>
+    <table ng-if="todaysTasks.length > 0">
       <thead>
         <tr>
           <th>Time</th>
@@ -50,9 +50,14 @@
             <button class="delete-btn" ng-click="remove(t)">x</button>
           </td>
         </tr>
-        <tr class="summary">
+        <tr class="total">
           <td colspan="2">Total time</td>
           <td class="text-right">{{totalTimeSpent()}}</td>
+          <td></td>
+        </tr>
+        <tr class="summary" ng-repeat="s in todaysSummary | orderBy:'timeInHours':true">
+          <td colspan="2">{{s.project}}</td>
+          <td class="text-right">{{s.timeInHours}}</td>
           <td></td>
         </tr>
       </tbody>

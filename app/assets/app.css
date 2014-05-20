@@ -150,11 +150,25 @@ td, th{
   width: 5px;
 }
 
-.summary{
+.total{
   font-style: italic;
-  font-size: 12px;
+  font-size: 14px;
   border-top: 1px dashed #E8E8E8;
   color: #555;
+}
+
+.total td{
+  padding: 10px 15px 3px 15px;
+}
+
+.summary td{
+  padding: 3px 15px;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.summary:last-child td{
+  padding-bottom: 10px;
 }
 
 .delete-btn{
@@ -214,8 +228,16 @@ h2{
   border-left: 1px solid rgba(244,244,244,0.9);
 }
 
+.datepicker button:disabled{
+  color: #CFCFCF;
+}
+
 hr{
   border: 0;
   border-bottom: 1px dashed #E8E8E8;
   background: rgba(0,0,0,.2);
+}
+
+input[type=date]::-webkit-calendar-picker-indicator {
+  display: inline-block;
 }
