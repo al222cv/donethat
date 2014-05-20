@@ -2,8 +2,6 @@
 var db = new PouchDB('donethat');
 db.replicate.to('https://larchii.cloudant.com/donethat', {continuous: true});
 db.replicate.from('https://larchii.cloudant.com/donethat', {continuous: true});
-// Pouch.replicate('ng-pouch', 'http://127.0.0.1:5984/ng-db', {continuous: true});
-// Pouch.replicate('http://127.0.0.1:5984/ng-db', 'ng-pouch', {continuous: true});
 
 var app = angular.module('donethat', []);
 
@@ -162,7 +160,7 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
     delete $scope.task.endTime;
 
     db.put($scope.task).then(function(){
-      loadData();
+      $rootScope.$broadcast('appReady');
       $scope.task = null;
       $scope.$apply();
     });
@@ -177,7 +175,9 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
   };
 
   $scope.remove = function(doc){
-    db.remove(doc).then(loadData);
+    db.remove(doc).then(function(){
+      $rootScope.$broadcast('appReady');
+    });
   };
 
   $scope.totalTimeSpent = function(){
