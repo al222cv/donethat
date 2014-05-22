@@ -145,6 +145,7 @@ td, th{
 
 .heading{
   padding: 10px 15px;
+  position: relative;
 }
 
 .th-action{
@@ -242,4 +243,17 @@ hr{
 
 input[type=date]::-webkit-calendar-picker-indicator {
   display: inline-block;
+}
+
+.time-btn{
+  position: absolute;
+  top:5px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #555;
+}
+.time-btn:hover{
+  text-decoration: underline;
 }

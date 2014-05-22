@@ -17,7 +17,13 @@
       <button ng-click="changeDate(1)" ng-disabled="nextUnavailable()">></button>
     </div>
     <form name="taskForm" ng-submit="add()">
-      <div class="heading">New task</div>
+      <div class="heading">
+        New task
+        <button class="time-btn" ng-click="toggleTime()">
+          <span ng-if="!timeStarted">Start time</span>
+          <span ng-if="timeStarted">Stop time</span>
+        </button>
+      </div>
       <div class="group">
         <input required type="time" step="900" ng-model="task.startTime" />
         <input required type="time" step="900" ng-model="task.endTime" />
@@ -39,9 +45,9 @@
     <table ng-if="todaysTasks.length > 0">
       <thead>
         <tr>
-          <th>Time</th>
+          <th style="width:115px">Time</th>
           <th>Task</th>
-          <th class="text-right">Hours</th>
+          <th class="text-right" style="width: 75px">Hours</th>
           <th class="th-action"></th>
         </tr>
       </thead>
@@ -77,13 +83,13 @@
       <thead>
         <tr>
           <th>Project & task</th>
-          <th>Hours</th>
+          <th class="text-right" style="width: 75px">Hours</th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="s in stats">
           <td>{{s.name}}</td>
-          <td>{{s.timeInHours}}</td>
+          <td class="text-right">{{s.timeInHours}}</td>
         </tr>
       </tbody>
     </table>

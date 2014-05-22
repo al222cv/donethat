@@ -129,7 +129,8 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
 
   //watch functions
   window.onbeforeunload = function() {
-    if($scope.task) return 'You have unsaved changes!';
+    if($scope.task) 
+      return 'You have unsaved changes!';
   }
 
   $rootScope.$on('$locationChangeSuccess', function(){
@@ -139,7 +140,35 @@ app.controller('HomeCtrl', function($scope, $rootScope, $filter, $location) {
     }
   });
 
+  $scope.$watch('task.endTime', function(newVal){
+    $scope.timeStarted = false;
+  });
+
   //action functions
+  $scope.toggleTime = function(){
+    $scope.timeStarted = !$scope.timeStarted;
+    
+    if(!$scope.task)
+      $scope.task = {};
+
+    if($scope.timeStarted)
+      $scope.task.startTime = getTimeSetToNearestQuarter();
+    else
+      $scope.task.endTime = getTimeSetToNearestQuarter();
+
+    function getTimeSetToNearestQuarter(){
+      var now = new Date();
+      var mins = now.getMinutes();
+      var quarter = Math.round(mins/15);
+      
+      if (quarter == 4) now.setHours(now.getHours()+1);
+      
+      now.setMinutes((quarter*15)%60);
+
+      return now;
+    }
+  };
+
   $scope.add = function() {
     if($scope.taskForm.$invalid) return;
 
