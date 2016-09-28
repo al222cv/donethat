@@ -2,10 +2,10 @@
 var db = new PouchDB('donethat');
 var app = angular.module('donethat', []);
 
-if(document.URL.indexOf('herokuapp') != -1){
-  db.replicate.to('https://larchii.cloudant.com/donethat', {continuous: true});
-  db.replicate.from('https://larchii.cloudant.com/donethat', {continuous: true});
-}
+//if(document.URL.indexOf('herokuapp') != -1){
+//  db.replicate.to('https://larchii.cloudant.com/donethat', {continuous: true});
+//  db.replicate.from('https://larchii.cloudant.com/donethat', {continuous: true});
+//}
 
 app.run(function($rootScope) {
   var allProjectsView = {
